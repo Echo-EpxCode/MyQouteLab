@@ -12,16 +12,51 @@ class QuoteLabb {
     }
 
     bindEvents() {
-        document.getElementById('addFeatureBtn').addEventListener('click', () => this.addFeature());
-        document.getElementById('urgentToggle').addEventListener('change', (e) => this.updateQuote());
-        document.getElementById('exportQuote').addEventListener('click', () => this.exportQuote());
+        const addBtn = document.getElementById('addFeatureBtn');
+        if (addBtn) addBtn.addEventListener('click', () => this.addFeature());
 
-        // Listen for input changes
-        document.addEventListener('input', (e) => {
-            if (e.target.matches('.feature-name, .feature-hours')) {
+        const urgent = document.getElementById('urgentToggle');
+        if (urgent) urgent.addEventListener('change', () => this.updateQuote());
+
+        const exportBtn = document.getElementById('exportQuote');
+        if (exportBtn) exportBtn.addEventListener('click', () => this.exportQuote());
+
+        // Delegate input/blur handling to the features list so totals update when user fills fields
+        const featuresList = document.getElementById('featuresList');
+        if (featuresList) {
+            featuresList.addEventListener('input', (e) => {
+                const target = e.target;
+                if (!target) return;
+
+                // Sanitize while typing
+                if (target.classList && target.classList.contains('feature-hours')) {
+                    target.value = (target.value || '').replace(/[^0-9.]/g, '');
+                }
+                if (target.classList && target.classList.contains('feature-name')) {
+                    target.value = target.value.slice(0, 50).replace(/[^\w\s-]/g, '');
+                }
+
+                // Update totals immediately when fields change
                 this.updateQuote();
-            }
-        });
+            });
+
+            // Format hours on blur and clamp limits
+            featuresList.addEventListener(
+                'blur',
+                (e) => {
+                    const t = e.target;
+                    if (t && t.classList && t.classList.contains('feature-hours')) {
+                        let v = parseFloat(t.value);
+                        if (isNaN(v)) v = 0;
+                        if (v < 0) v = 0;
+                        if (v > 100) v = 100;
+                        t.value = v.toFixed(1);
+                        this.updateQuote();
+                    }
+                },
+                true
+            );
+        }
     }
 
     addFeature() {
@@ -48,7 +83,7 @@ class QuoteLabb {
         const nameInput = document.querySelector(`[data-feature-id="${featureId}"] .feature-name`);
         nameInput.focus();
 
-        this.updateQuote();
+        // Do not recalculate when adding a blank feature; totals will update when user enters data
     }
 
     removeFeature(featureId) {
@@ -79,7 +114,7 @@ class QuoteLabb {
 
     collectFeatures() {
         this.features = [];
-        document.querySelectorAll('.feature-input-group').forEach(group => {
+        document.querySelectorAll('.feature-input-group').forEach((group) => {
             const name = group.querySelector('.feature-name').value.trim();
             const hours = parseFloat(group.querySelector('.feature-hours').value) || 0;
 
@@ -303,7 +338,7 @@ class QuoteLabb {
         color: #333;
         background: white;
     }
-    
+
     .container {
         max-width: none;
         width: 100%;
@@ -331,7 +366,7 @@ class QuoteLabb {
     .header {
         page-break-after: always;
     }
-    
+
     .header h1 {
         font-size: 2.2rem;
         font-weight: bold;
@@ -345,7 +380,7 @@ class QuoteLabb {
         background: #f8f9fa;
         border-radius: 8px;
     }
-    
+
     .project-features h2 {
         font-size: 1.5rem;
         color: #2c3e50;
@@ -353,12 +388,12 @@ class QuoteLabb {
         border-bottom: 3px solid #3498db;
         padding-bottom: 8px;
     }
-    
+
     .project-features ul {
         list-style: none;
         padding-left: 0;
     }
-    
+
     .project-features li {
         padding: 8px 0;
         border-bottom: 1px solid #e0e0e0;
@@ -372,7 +407,7 @@ class QuoteLabb {
         border-radius: 12px;
         padding: 30px;
     }
-    
+
     .price-display {
         font-size: 3rem;
         font-weight: 700;
@@ -380,14 +415,14 @@ class QuoteLabb {
         margin: 20px 0;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
-    
+
     .summary-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 20px;
         margin-top: 20px;
     }
-    
+
     .summary-item {
         background: rgba(255,255,255,0.2);
         padding: 15px;
@@ -400,19 +435,19 @@ class QuoteLabb {
         background: #fff3cd;
         border-left: 5px solid #ffc107;
     }
-    
+
     .terms-conditions h2 {
         font-size: 1.5rem;
         color: #856404;
         margin-bottom: 15px;
     }
-    
+
     .terms-conditions ol {
         padding-left: 20px;
         font-size: 11pt;
         line-height: 1.6;
     }
-    
+
     .terms-conditions li {
         margin-bottom: 8px;
     }
@@ -424,13 +459,13 @@ class QuoteLabb {
         padding: 40px;
         text-align: center;
     }
-    
+
     .signature-section h2 {
         font-size: 1.4rem;
         margin-bottom: 30px;
         color: #495057;
     }
-    
+
     .signature-line {
         border-bottom: 2px solid #000;
         height: 50px;
@@ -450,7 +485,7 @@ class QuoteLabb {
         align-items: end;
         margin-top: 30px;
     }
-    
+
     .qr-code {
         width: 160px;
         height: 160px;
@@ -460,7 +495,7 @@ class QuoteLabb {
         background: white;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-    
+
     .qr-label {
         text-align: center;
         font-size: 11pt;
@@ -475,7 +510,7 @@ class QuoteLabb {
     footer {
         display: none !important;
     }
-    
+
     /* Ensure full page usage */
     @page {
         size: A4;
@@ -490,7 +525,7 @@ class QuoteLabb {
     }
 }
 
-        
+
         /* Ensure all inline styles use black text */
         p, h1, h2, h3, h4, h5, h6, li, span, strong {
             color: #000000 !important;
@@ -601,15 +636,15 @@ class QuoteLabb {
                 scale: 2,
                 useCORS: true,
                 letterRendering: true,
-                allowTaint: true
+                allowTaint: true,
             },
             jsPDF: {
                 unit: 'in',
                 format: 'a4',
                 orientation: 'portrait',
-                compress: true
+                compress: true,
             },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
         };
 
         html2pdf().set(opt).from(quoteContent).save();
